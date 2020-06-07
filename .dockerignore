@@ -1,0 +1,14 @@
+client/
+config/
+doc/
+gradle/
+build/
+test/
+.gitignore
+.gitlab-ci.yml
+gradlew
+*.bat
+*.md
+.gradle/
+.idea/
+.git/

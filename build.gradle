@@ -1,0 +1,196 @@
+import org.gradle.api.tasks.testing.logging.TestLogEvent
+
+buildscript {
+    repositories {
+        mavenCentral()
+    }
+    configurations.maybeCreate("pitest")
+    dependencies {
+        classpath 'info.solidsoft.gradle.pitest:gradle-pitest-plugin:1.4.5'
+        pitest 'org.pitest:pitest-junit5-plugin:0.10'
+    }
+}
+
+plugins {
+    id "com.github.spotbugs" version "2.0.1"
+    id "io.freefair.lombok" version "4.1.5" apply false
+    id 'com.github.johnrengelman.shadow' version '5.2.0' apply false
+    id "org.sonarqube" version "2.7"
+}
+
+allprojects {
+    repositories {
+        mavenLocal()
+        mavenCentral()
+        jcenter()
+        google()
+        maven { url "https://oss.sonatype.org/content/repositories/snapshots/" }
+        maven { url "https://oss.sonatype.org/content/repositories/releases/" }
+    }
+
+    apply plugin: 'java'
+    apply plugin: 'com.github.spotbugs'
+    apply plugin: 'info.solidsoft.pitest'
+
+    dependencies {
+        spotbugsPlugins 'com.h3xstream.findsecbugs:findsecbugs-plugin:1.7.1'
+        compile group: 'org.hibernate', name: 'hibernate-gradle-plugin', version: '5.4.9.Final'
+        compile group: 'mysql', name: 'mysql-connector-java', version: '5.1.6'
+        testCompile 'org.junit.jupiter:junit-jupiter:5.5.2'
+        testCompile "org.mockito:mockito-core:2.25.1"
+        testCompile "org.assertj:assertj-core:3.12.2"
+        testCompile 'org.mockito:mockito-junit-jupiter:3.2.4'
+    }
+
+    apply plugin: 'pmd'
+    apply plugin: 'checkstyle'
+    apply plugin: 'jacoco'
+
+    test {
+        useJUnitPlatform()
+
+        testLogging {
+            events TestLogEvent.FAILED,
+                    TestLogEvent.SKIPPED
+
+            exceptionFormat = 'full'
+        }
+
+        jacoco {
+            enabled = true
+            includes = ['nl.tudelft.cse.sem.*']
+        }
+    }
+
+    pitest {
+        testPlugin = 'junit5'
+        pitestVersion = '1.4.3'
+        threads = 4
+        outputFormats = ['HTML']
+        timestampedReports = false
+        failWhenNoMutations = false
+        targetClasses = ['nl.tudelft.cse.sem.*']
+        mutationThreshold = 65
+        avoidCallsTo = ['java.util.logging', 'org.apache.log4j', 'org.slf4j', 'org.apache.commons.logging',
+                        'java.lang.Throwable', 'org.apache.logging']
+    }
+
+    jacocoTestCoverageVerification {
+        violationRules {
+            rule {
+                enabled = true
+                element = 'PACKAGE'
+                includes = ['nl.tudelft.cse.sem.*']
+                excludes = ['nl.tudelft.cse.sem.server', 'nl.tudelft.cse.sem.client.screens',
+                            'nl.tudelft.cse.sem.client.screens.tutorial',
+                            'nl.tudelft.cse.sem.client.screens.mfa',
+                            'nl.tudelft.cse.sem.client', 'nl.tudelft.cse.sem.shared',
+                            'nl.tudelft.cse.sem.client.gamelogic.gameobjects.util',
+                            'nl.tudelft.cse.sem.server.http']
+                limit {
+                    counter = 'LINE'
+                    value = 'COVEREDRATIO'
+                    minimum = 0.75
+                }
+            }
+        }
+    }
+
+    checkstyle {
+        toolVersion "8.25"
+        configFile = rootProject.file('config/checkstyle/checkstyle.xml')
+        ignoreFailures = false
+    }
+
+    pmd {
+        incrementalAnalysis = true
+    }
+
+    spotbugs {
+        sourceSets = [sourceSets.main]
+        ignoreFailures = false
+        effort = "default"
+        toolVersion = '4.0.0-beta4'
+        reportLevel = "high"
+        visitors = ["FindSqlInjection", "SwitchFallthrough"]
+        excludeFilter = file("$rootProject.projectDir/config/spotbugs/excludeFilter.xml")
+    }
+
+    tasks.withType(com.github.spotbugs.SpotBugsTask) {
+        reports.xml.enabled = false
+        reports.html.enabled = true
+    }
+
+    wrapper {
+        distributionType = Wrapper.DistributionType.ALL
+    }
+
+    check.finalizedBy(jacocoTestCoverageVerification, 'pitest')
+}
+
+subprojects {
+    dependencies {
+        compile group: 'org.apache.logging.log4j', name: 'log4j-api', version: '2.12.1'
+        compile group: 'org.apache.logging.log4j', name: 'log4j-core', version: '2.12.1'
+    }
+
+    apply plugin: 'com.github.johnrengelman.shadow'
+    apply plugin: 'io.freefair.lombok'
+
+    generateLombokConfig.enabled = false
+
+    version = '1.0'
+
+    group 'nl.tudelft.cse.sem.template'
+    version '1.0-SNAPSHOT'
+
+    sourceCompatibility = 11
+}
+
+task jacocoMerge(type: JacocoMerge) {
+    subprojects.each { subproject ->
+        executionData subproject.tasks.withType(Test)
+    }
+}
+
+task coverageReport(type: JacocoReport) {
+    dependsOn(subprojects.test, jacocoMerge)
+    sourceSets project(':client').sourceSets.main
+    sourceSets project(':server').sourceSets.main
+    sourceSets project(':shared').sourceSets.main
+
+    executionData "${buildDir}/jacoco/jacocoMerge.exec"
+
+    reports {
+        html.enabled = true
+        html.destination file("${buildDir}/jacoco/html")
+        xml.enabled = true
+        csv.enabled = true
+        csv.destination file("${buildDir}/jacoco/csv")
+    }
+
+    onlyIf = {
+        true
+    }
+
+    afterEvaluate {
+        classDirectories.setFrom(files(classDirectories.files.collect {
+            fileTree(dir: it, exclude: ['nl/tudelft/cse/sem/server/Bootstrap**', 'nl/tudelft/cse/sem/client/screens/**',
+                                        'nl/tudelft/cse/sem/client/Launcher', 'nl/tudelft/cse/sem/client/StartGame'])
+        }))
+    }
+}
+
+task testReport(type: TestReport) {
+    destinationDir = file("$buildDir/reports/tests")
+
+    reportOn subprojects*.test
+}
+
+sonarqube {
+    properties {
+        property 'sonar.coverage.exclusions', "**/nl/tudelft/cse/sem/server/Bootstrap*," +
+                "**/nl/tudelft/cse/sem/client/screens/**,**/nl/tudelft/cse/sem/client/Launcher*," +
+                "**/nl/tudelft/cse/sem/client/StartGame*"
+    }
+}

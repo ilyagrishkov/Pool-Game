@@ -1,0 +1,11 @@
+dependencies {
+    
+    // https://mvnrepository.com/artifact/org.json/json
+    implementation group: 'org.json', name: 'json', version: '20190722'
+    implementation 'com.squareup.retrofit2:retrofit:2.6.2'
+    compile 'com.squareup.retrofit2:converter-gson:2.4.0'
+    // https://mvnrepository.com/artifact/com.squareup.okhttp3/logging-interceptor
+    compile group: 'com.squareup.okhttp3', name: 'logging-interceptor', version: '4.2.2'
+    compile 'org.jboss.aerogear:aerogear-otp-java:1.0.0'
+    compile 'com.google.zxing:javase:3.2.1'
+}

@@ -1,0 +1,85 @@
+# Build artifacts
+build/**
+.gradle/**
+
+**/build/**
+**/.gradle/**
+
+# Not strictly necessary, however, *.jar files are often ignored and this one is required by the Gradle wrapper.
+!gradle/wrapper/gradle-wrapper.jar
+
+# Editor settings
+.idea/**
+
+
+# Created by https://www.gitignore.io/api/git,linux,macos,gradle,windows,intellij,intellij+all,intellij+iml,archlinuxpackages
+# Edit at https://www.gitignore.io/?templates=git,linux,macos,gradle,windows,intellij,intellij+all,intellij+iml,archlinuxpackages
+
+### ArchLinuxPackages ###
+*.tar
+*.tar.*
+*.exe
+*.msi
+*.zip
+*.tgz
+*.log
+*.log.*
+*.sig
+
+### Git ###
+# Created by git for backups. To disable backups in Git:
+# $ git config --global mergetool.keepBackup false
+*.orig
+
+# Created by git when using merge tools for conflicts
+*.BACKUP.*
+*.BASE.*
+*.LOCAL.*
+*.REMOTE.*
+*_BACKUP_*.txt
+*_BASE_*.txt
+*_LOCAL_*.txt
+*_REMOTE_*.txt
+
+
+# CMake
+cmake-build-*/
+
+# File-based project format
+*.iws
+
+# IntelliJ
+out/
+
+# mpeltonen/sbt-idea plugin
+.idea_modules/
+
+# JIRA plugin
+atlassian-ide-plugin.xml
+
+# Cursive Clojure plugin
+.idea/replstate.xml
+
+# Crashlytics plugin (for Android Studio and IntelliJ)
+com_crashlytics_export_strings.xml
+crashlytics.properties
+crashlytics-build.properties
+fabric.properties
+
+# Editor-based Rest Client
+.idea/httpRequests
+
+### Linux ###
+*~
+
+### macOS ###
+# General
+.DS_Store
+.AppleDouble
+.LSOverride
+
+#LaTeX
+*.aux
+*.out
+*.toc
+*.synctex.gz

@@ -1,0 +1,28 @@
+ext {
+    gdxVersion = '1.9.10'
+}
+
+pitest {
+    excludedClasses = ['nl.tudelft.cse.sem.client.screens.*']
+
+    avoidCallsTo = ['java.util.logging', 'org.apache.log4j', 'org.slf4j', 'org.apache.commons.logging',
+                    'java.lang.Throwable', 'org.apache.logging', 'com.badlogic.gdx']
+}
+
+dependencies {
+    compile project(path: ':shared', configuration: 'shadow')
+    compile "com.badlogicgames.gdx:gdx-backend-lwjgl3:$gdxVersion"
+    compile "com.badlogicgames.gdx:gdx-bullet:$gdxVersion"
+    compile "com.badlogicgames.gdx:gdx-platform:$gdxVersion:natives-desktop"
+    compile "com.badlogicgames.gdx:gdx-bullet-platform:$gdxVersion:natives-desktop"
+    compile "com.badlogicgames.gdx:gdx:$gdxVersion"
+    compile "com.badlogicgames.gdx:gdx-freetype:$gdxVersion"
+    compile "com.badlogicgames.gdx:gdx-freetype-platform:$gdxVersion:natives-desktop"
+    testImplementation "com.squareup.okhttp3:mockwebserver:4.2.1"
+}
+
+jar {
+    manifest {
+        attributes 'Main-Class': 'nl.tudelft.cse.sem.client.Launcher'
+    }
+}

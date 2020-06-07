@@ -1,0 +1,83 @@
+plugins {
+    id "com.chrisgahlert.gradle-dcompose-plugin" version "0.15.1"
+}
+
+dependencies {
+    compile project(path: ':shared', configuration: 'shadow')
+    implementation 'io.javalin:javalin:3.6.0'
+    implementation group: 'org.hibernate', name: 'hibernate-gradle-plugin', version: '5.4.9.Final'
+    compile group: 'commons-io', name: 'commons-io', version: '2.6'
+    implementation 'redis.clients:jedis:2.9.0'
+    implementation 'com.auth0:java-jwt:3.8.3'
+    testImplementation 'com.google.guava:guava-testlib:28.1-jre'
+    compile "org.slf4j:slf4j-simple:1.8.0-beta4"
+    compile group: 'org.reflections', name: 'reflections', version: '0.9.12'
+    compile 'de.mkammerer:argon2-jvm:2.6'
+}
+
+def mysqlTestLocation = System.getenv("MYSQL_LOCATION")
+def mysqlTestPw = System.getenv("MYSQL_ROOT_PASSWORD") ?: 'NULL'
+def mysqlTestDb = System.getenv("MYSQL_DATABASE") ?: 'database'
+
+// If the build is not started from CI, create containers for the dependencies
+if (!project.hasProperty("CI")) {
+    dcompose {
+        database {
+            image = 'mysql:5.7'
+            portBindings = ["3306"]
+            env = ["MYSQL_DATABASE=$mysqlTestDb", "MYSQL_ROOT_PASSWORD=$mysqlTestPw"]
+        }
+    }
+}
+
+def dependencies_config = {
+    // If the build is not started from CI, start the containers
+    if (!project.hasProperty("CI")) {
+        dependsOn startDatabaseContainer
+        finalizedBy stopDatabaseContainer
+    }
+
+    doFirst {
+        systemProperty 'mysql.location', mysqlTestLocation
+        systemProperty 'mysql.port', ''
+        systemProperty 'mysql.user', 'root'
+        systemProperty 'mysql.pw', mysqlTestPw
+        systemProperty 'mysql.db', mysqlTestDb
+
+        // If the build has not been started from CI, get the port & host the db is listening on
+        if (!project.hasProperty("CI")) {
+            systemProperty 'mysql.port', ':' + dcompose.database.findHostPort(3306)
+            systemProperty 'mysql.location', dcompose.database.dockerHost
+        }
+    }
+
+    doLast {
+        systemProperties.remove 'mysql.port'
+        systemProperties.remove 'mysql.location'
+    }
+}
+
+test {
+    configure dependencies_config
+}
+
+tasks.withType(org.gradle.api.tasks.JavaExec) {
+    configure dependencies_config
+}
+
+pitest {
+    excludedClasses = ['nl.tudelft.cse.sem.server.Bootstrap']
+
+    avoidCallsTo = ['java.util.logging', 'org.apache.log4j', 'org.slf4j', 'org.apache.commons.logging', 'org.hibernate',
+    'java.lang.Throwable', 'org.apache.logging']
+}
+
+jar {
+    manifest {
+        attributes 'Main-Class': 'nl.tudelft.cse.sem.server.Bootstrap'
+    }
+}
+
+shadowJar {
+    archiveFileName = "server.jar"
+}
