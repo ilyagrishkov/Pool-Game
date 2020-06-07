@@ -1,6 +1,4 @@
-# Pool group 86
-TODO
-
+#Pool Game
 ## Requirements
 ### Client
 In order to build the client application you'll need:  
@@ -9,35 +7,35 @@ In order to build the client application you'll need:
 
 To run the client you can simply run the JAR after building it. For this you'll need Java 11+.  
 
-The client attempts to connect to the API, which by default is located at 'https://sem.timanema.net/'. 
+The client attempts to connect to the API, which by default is located at 'https://sem.timanema.net/'.
 You can override this location by setting the environment variable 'SERVER\_LOCATION'
 
 ### Server
-In order to build and/or test the server you'll need: 
- 
+In order to build and/or test the server you'll need:
+
 * Docker 19.03+ (older versions may work, but not tested)
 * JDK11
 
 To run the server you can simply start a container with the server image. For this you'll also need Docker.
 
-The server has several customization options, which can be found under the running instructions of the readme. 
+The server has several customization options, which can be found under the running instructions of the readme.
 
-Even though the server can be run stand-alone, it is meant to be behind a load balancer and/or reverse proxy. 
+Even though the server can be run stand-alone, it is meant to be behind a load balancer and/or reverse proxy.
 Directly publicly exposing the server is not recommended.
 
-## Instructions 
+## Instructions
 *Note: All these command expect that you are in the root dir*
-### General instructions 
-*Note: The server relies on docker for its tests and builds, 
-so executing the below commands will not work if you do not have docker installed. 
+### General instructions
+*Note: The server relies on docker for its tests and builds,
+so executing the below commands will not work if you do not have docker installed.
 You can either install docker, or choose to not run server-related commands*  
-  
+
 
 Pre-push commands:
 ```bash
-# You should do this for every module you've worked on to ensure all your 
-# code isn't breaking any rules. 
-# Replace <module> by whatever module you worked on (client/shared/server) 
+# You should do this for every module you've worked on to ensure all your
+# code isn't breaking any rules.
+# Replace <module> by whatever module you worked on (client/shared/server)
 
 $ ./gradlew clean :<module>:shadowJar :<module>:check
 $ <commit & push iff succesfull>
@@ -55,7 +53,7 @@ Generating aggregated test coverage report:
 $ ./gradlew clean coverageReport
 ```
 
-Generating mutation testing report: 
+Generating mutation testing report:
 ```bash
 # Unfortunately these can't be easily aggregated so you'll have to
 # manually check the report for each module.  
@@ -86,7 +84,7 @@ In most cases localhost suffices, but for some things (like toolbox) this should
 
 Server:
 ```bash
-$ docker run --env MYSQL_PASS=<password> --env JWT_SECRET=<secret> [--env VAR=val] -p 8080:8080 sem-pool-server 
+$ docker run --env MYSQL_PASS=<password> --env JWT_SECRET=<secret> [--env VAR=val] -p 8080:8080 sem-pool-server
 ```
 
 Possible environment variables:  
